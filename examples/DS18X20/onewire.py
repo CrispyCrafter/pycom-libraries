@@ -21,9 +21,10 @@ class OneWire:
     CMD_MATCHROM = const(0x55)
     CMD_SKIPROM = const(0xcc)
 
-    def __init__(self, pin):
+    def __init__(self, pin, read_time_delay=1):
         self.pin = pin
         self.pin.init(pin.OPEN_DRAIN, pin.PULL_UP)
+        self.read_time_delay = read_time_delay # microsecond
 
     def reset(self):
         """
@@ -53,9 +54,9 @@ class OneWire:
         pin(1) # half of the devices don't match CRC without this line
         i = machine.disable_irq()
         pin(0)
-        sleep_us(1)
+        sleep_us(self.read_time_delay)
         pin(1)
-        sleep_us(1)
+        sleep_us(self.read_time_delay)
         value = pin()
         enable_irq(i)
         sleep_us(40)
