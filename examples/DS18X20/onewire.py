@@ -46,7 +46,7 @@ class OneWire:
         sleep_us(420)
         return status
 
-    def read_bit(self):
+    def readbit(self):
         sleep_us = time.sleep_us
         enable_irq = machine.enable_irq
         pin = self.pin
@@ -62,19 +62,19 @@ class OneWire:
         sleep_us(40)
         return value
 
-    def read_byte(self):
+    def readbyte(self):
         value = 0
         for i in range(8):
-            value |= self.read_bit() << i
+            value |= self.readbit() << i
         return value
 
-    def read_bytes(self, count):
+    def readbytes(self, count):
         buf = bytearray(count)
         for i in range(count):
-            buf[i] = self.read_byte()
+            buf[i] = self.readbyte()
         return buf
 
-    def write_bit(self, value):
+    def writebit(self, value):
         sleep_us = time.sleep_us
         pin = self.pin
 
@@ -87,22 +87,22 @@ class OneWire:
         sleep_us(1)
         machine.enable_irq(i)
 
-    def write_byte(self, value):
+    def writebyte(self, value):
         for i in range(8):
-            self.write_bit(value & 1)
+            self.writebit(value & 1)
             value >>= 1
 
-    def write_bytes(self, buf):
+    def writebytes(self, buf):
         for b in buf:
-            self.write_byte(b)
+            self.writebyte(b)
 
     def select_rom(self, rom):
         """
         Select a specific device to talk to. Pass in rom as a bytearray (8 bytes).
         """
         self.reset()
-        self.write_byte(CMD_MATCHROM)
-        self.write_bytes(rom)
+        self.writebyte(CMD_MATCHROM)
+        self.writebytes(rom)
 
     def crc8(self, data):
         """
@@ -140,7 +140,7 @@ class OneWire:
     def _search_rom(self, l_rom, diff):
         if not self.reset():
             return None, 0
-        self.write_byte(CMD_SEARCHROM)
+        self.writebyte(CMD_SEARCHROM)
         if not l_rom:
             l_rom = bytearray(8)
         rom = bytearray(8)
@@ -149,8 +149,8 @@ class OneWire:
         for byte in range(8):
             r_b = 0
             for bit in range(8):
-                b = self.read_bit()
-                if self.read_bit():
+                b = self.readbit()
+                if self.readbit():
                     if b: # there are no devices or there is an error on the bus
                         return None, 0
                 else:
@@ -158,7 +158,7 @@ class OneWire:
                         if diff > i or ((l_rom[byte] & (1 << bit)) and diff != i):
                             b = 1
                             next_diff = i
-                self.write_bit(b)
+                self.writebit(b)
                 if b:
                     r_b |= 1 << bit
                 i -= 1
@@ -180,7 +180,7 @@ class DS18X20(object):
         Checks wether one of the DS18x20 devices on the bus is busy
         performing a temperature convertion
         """
-        return not self.ow.read_bit()
+        return not self.ow.readbit()
 
     def start_conversion(self, rom=None):
         """
@@ -195,7 +195,7 @@ class DS18X20(object):
             ow = self.ow
             ow.reset()
             ow.select_rom(rom)
-            ow.write_byte(0x44)  # Convert Temp
+            ow.writebyte(0x44)  # Convert Temp
 
     def read_temp_async(self, rom=None):
         """
@@ -212,8 +212,8 @@ class DS18X20(object):
             ow = self.ow
             ow.reset()
             ow.select_rom(rom)
-            ow.write_byte(0xbe)  # Read scratch
-            data = ow.read_bytes(9)
+            ow.writebyte(0xbe)  # Read scratch
+            data = ow.readbytes(9)
             return self.convert_temp(rom[0], data)
 
     def convert_temp(self, rom0, data):
