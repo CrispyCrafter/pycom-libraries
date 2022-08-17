@@ -20,6 +20,8 @@ class OneWire:
     CMD_READROM = const(0x33)
     CMD_MATCHROM = const(0x55)
     CMD_SKIPROM = const(0xcc)
+    PULLUP_ON = const(1)
+
 
     def __init__(self, pin, read_time_delay=1):
         self.pin = pin
@@ -54,11 +56,10 @@ class OneWire:
         pin(1) # half of the devices don't match CRC without this line
         i = machine.disable_irq()
         pin(0)
-        sleep_us(self.read_time_delay)
         pin(1)
         sleep_us(self.read_time_delay)
         value = pin()
-        enable_irq(i)
+        self.enable_irq(i)
         sleep_us(40)
         return value
 
@@ -74,18 +75,21 @@ class OneWire:
             buf[i] = self.readbyte()
         return buf
 
-    def writebit(self, value):
+    def writebit(self, value, powerpin=None):
         sleep_us = time.sleep_us
         pin = self.pin
 
-        i = machine.disable_irq()
+        i = self.disable_irq()
         pin(0)
-        sleep_us(1)
+        # sleep_us(1) # dropped for shorter pulses
         pin(value)
         sleep_us(60)
-        pin(1)
-        sleep_us(1)
-        machine.enable_irq(i)
+        if powerpin:
+            pin(1)
+            powerpin(PULLUP_ON)
+        else:
+            pin(1)
+        self.enable_irq(i)
 
     def writebyte(self, value):
         for i in range(8):
