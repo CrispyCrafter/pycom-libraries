@@ -28,33 +28,36 @@ class OneWire:
         self.pin.init(pin.OPEN_DRAIN, pin.PULL_UP)
         self.read_time_delay = read_time_delay # microsecond
 
+    def disable_irq(self):
+        return machine.disable_irq
+
+    def enable_irq(self, interupt):
+        machine.enable_irq(interupt)
+
     def reset(self):
         """
         Perform the onewire reset function.
         Returns True if a device asserted a presence pulse, False otherwise.
         """
         sleep_us = time.sleep_us
-        disable_irq = machine.disable_irq
-        enable_irq = machine.enable_irq
         pin = self.pin
 
         pin(0)
         sleep_us(480)
-        i = disable_irq()
+        i = self.disable_irq()
         pin(1)
         sleep_us(60)
         status = not pin()
-        enable_irq(i)
+        self.enable_irq(i)
         sleep_us(420)
         return status
 
     def readbit(self):
         sleep_us = time.sleep_us
-        enable_irq = machine.enable_irq
         pin = self.pin
 
         pin(1) # half of the devices don't match CRC without this line
-        i = machine.disable_irq()
+        i = self.disable_irq()
         pin(0)
         pin(1)
         sleep_us(self.read_time_delay)
